@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cyrillic Drill – DJT Kana style Enhanced</title>
+  <style>
+    :root{
+      --bg:#1a1a2e;--panel:#2a2a4e;--muted:#a9a9d4;--text:#e0e0ff;--accent:#ff9e64;--good:#4dffaf;--bad:#ff79c6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text); transition: background-color 0.3s;}
+    .wrap{max-width:950px;margin:24px auto;padding:16px}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.37)}
+    .grid{display:grid;gap:16px}
+    .two{grid-template-columns:1.1fr .9fr}
+    @media(max-width:900px){.two{grid-template-columns:1fr}}
+    .big{
+      font-size:128px;line-height:1.1;text-align:center;border-radius:16px;padding:24px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+      user-select:none;min-height:170px;display:flex;align-items:center;justify-content:center;
+    }
+    .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .input{display:flex;gap:10px;margin-top:14px}
+    input[type="text"]{flex:1;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:#101020;color:var(--text);padding:16px 14px;font-size:18px;outline:none; transition: all 0.2s;}
+    input[type="text"]:focus{border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 158, 100, 0.5);}
+    button{background:#3a3a5e;border:1px solid rgba(255,255,255,.16);color:var(--text);padding:12px 14px;border-radius:12px;font-weight:600;cursor:pointer; transition: all 0.2s;}
+    button:hover{filter:brightness(1.2); transform: translateY(-2px);}
+    button.primary{background:var(--accent);color:#101020;border-color:transparent}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:#101020;border:1px solid rgba(255,255,255,.14);font-size:14px;color:var(--muted)}
+    .hint{color:var(--muted);font-size:14px}
+    .good{color:var(--good)}
+    .bad{color:var(--bad)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .ks{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:8px}
+    .ks button{font-size:14px;padding:10px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .stat{background:#101020;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;text-align:center}
+    .stat b{display:block;font-size:22px;margin-top:6px}
+    .tog{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+    label{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+    .msg{min-height:22px;margin-top:6px}
+    .table{max-height:260px;overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,.12)}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
+    tr:last-child td{border-bottom:none}
+    th{position:sticky;top:0;background:#1e1e3f;text-align:left}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#101020;border:1px solid rgba(255,255,255,.12);padding:2px 6px;border-radius:6px}
+    #learningPage {display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-top: 16px;}
+    .learn-card {background: #101020; border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: transform 0.2s;}
+    .learn-card:hover {transform: scale(1.05);}
+    .learn-char {font-size: 32px; font-weight: bold; color: var(--accent);}
+    .learn-roman, .learn-pronounce {margin-top: 8px; font-size: 14px;}
+    .learn-pronounce {color: var(--muted);}
+  </style>
+</head>
+<body>
+  <div class="wrap grid two">
+    <section class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <div class="pill">Cyrillic Drill · Enhanced</div>
+          <div class="hint" style="margin-top:6px">Type the Latin transcription. Press <span class="kbd">Enter</span> to submit, <span class="kbd">Space</span> to skip.</div>
+        </div>
+        <div class="row">
+          <button id="speakBtn" title="Play sound of the letter">🔊 Speak</button>
+          <button id="nextBtn" class="primary">Next ↻</button>
+        </div>
+      </div>
+
+      <div id="glyph" class="big">А</div>
+
+      <div class="input">
+        <input id="answer" type="text" placeholder="Type romanization… (e.g., a, yo, zh, shch)" autocomplete="off" />
+        <button id="submitBtn">Check</button>
+      </div>
+      <div id="message" class="msg hint"></div>
+
+      <div class="stats" style="margin-top:16px">
+        <div class="stat"><span>Accuracy</span><b id="acc">100%</b></div>
+        <div class="stat"><span>Streak</span><b id="streak">0</b></div>
+        <div class="stat"><span>Seen</span><b id="seen">0</b></div>
+        <div class="stat"><span>Mastered</span><b id="mastered">0</b></div>
+      </div>
+
+      <div class="tog">
+        <label><input type="checkbox" id="upper" checked> UPPERCASE</label>
+        <label><input type="checkbox" id="lower" checked> lowercase</label>
+        <label><input type="checkbox" id="vowels" checked> Vowels</label>
+        <label><input type="checkbox" id="consonants" checked> Consonants</label>
+        <label><input type="checkbox" id="yoSet" checked> Ё/Й/Ю/Я set</label>
+        <label><input type="checkbox" id="signs"> Ь/Ъ signs</label>
+        <label><input type="checkbox" id="weightMistakes" checked> Focus mistakes</label>
+      </div>
+
+      <div class="ks">
+        <button onclick="resetStats()">Reset stats</button>
+        <button onclick="reseed()">Reroll set</button>
+        <button onclick="reveal()">Reveal</button>
+        <button id="toggleLearnBtn">Toggle Learning Page</button>
+      </div>
+    </section>
+
+    <aside class="card" id="progressMap">
+      <h3 style="margin:0 0 8px 0">Letter map & progress</h3>
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th>Letter</th><th>Answers</th><th>Seen</th><th>✔️</th><th>❌</th></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:10px">
+        Accepted variants follow an English-friendly transliteration: e = e/ye, ё = yo/jo, ю = yu/ju, я = ya/ja, ж = zh, х = kh/h, ц = ts/c, ч = ch, ш = sh, щ = shch/sch/šč, й = y/j. Soft (ь) and hard (ъ) signs accept <em>empty</em>, ' or ’.
+      </p>
+    </aside>
+  </div>
+  <div class="wrap">
+      <div id="learningPage"></div>
+  </div>
+
+<script>
+const ROMA = {
+    'А': { ans: ['a'], sound: 'a', pronounce: 'a as in father' }, 'а': { ans: ['a'], sound: 'a', pronounce: 'a as in father' },
+    'Б': { ans: ['b'], sound: 'b', pronounce: 'b as in bad' }, 'б': { ans: ['b'], sound: 'b', pronounce: 'b as in bad' },
+    'В': { ans: ['v'], sound: 'v', pronounce: 'v as in van' }, 'в': { ans: ['v'], sound: 'v', pronounce: 'v as in van' },
+    'Г': { ans: ['g'], sound: 'g', pronounce: 'g as in go' }, 'г': { ans: ['g'], sound: 'g', pronounce: 'g as in go' },
+    'Д': { ans: ['d'], sound: 'd', pronounce: 'd as in day' }, 'д': { ans: ['d'], sound: 'd', pronounce: 'd as in day' },
+    'Е': { ans: ['e', 'ye'], sound: 'ye', pronounce: 'ye as in yes' }, 'е': { ans: ['e', 'ye'], sound: 'ye', pronounce: 'ye as in yes' },
+    'Ё': { ans: ['yo', 'jo'], sound: 'yo', pronounce: 'yo as in your' }, 'ё': { ans: ['yo', 'jo'], sound: 'yo', pronounce: 'yo as in your' },
+    'Ж': { ans: ['zh'], sound: 'zh', pronounce: 's as in pleasure' }, 'ж': { ans: ['zh'], sound: 'zh', pronounce: 's as in pleasure' },
+    'З': { ans: ['z'], sound: 'z', pronounce: 'z as in zoo' }, 'з': { ans: ['z'], sound: 'z', pronounce: 'z as in zoo' },
+    'И': { ans: ['i'], sound: 'ee', pronounce: 'ee as in see' }, 'и': { ans: ['i'], sound: 'ee', pronounce: 'ee as in see' },
+    'Й': { ans: ['y', 'j'], sound: 'y', pronounce: 'y as in toy' }, 'й': { ans: ['y', 'j'], sound: 'y', pronounce: 'y as in toy' },
+    'К': { ans: ['k'], sound: 'k', pronounce: 'k as in kite' }, 'к': { ans: ['k'], sound: 'k', pronounce: 'k as in kite' },
+    'Л': { ans: ['l'], sound: 'l', pronounce: 'l as in lamp' }, 'л': { ans: ['l'], sound: 'l', pronounce: 'l as in lamp' },
+    'М': { ans: ['m'], sound: 'm', pronounce: 'm as in mother' }, 'м': { ans: ['m'], sound: 'm', pronounce: 'm as in mother' },
+    'Н': { ans: ['n'], sound: 'n', pronounce: 'n as in no' }, 'н': { ans: ['n'], sound: 'n', pronounce: 'n as in no' },
+    'О': { ans: ['o'], sound: 'o', pronounce: 'o as in more' }, 'о': { ans: ['o'], sound: 'o', pronounce: 'o as in more' },
+    'П': { ans: ['p'], sound: 'p', pronounce: 'p as in potato' }, 'п': { ans: ['p'], sound: 'p', pronounce: 'p as in potato' },
+    'Р': { ans: ['r'], sound: 'r', pronounce: 'r as in run (rolled)' }, 'р': { ans: ['r'], sound: 'r', pronounce: 'r as in run (rolled)' },
+    'С': { ans: ['s'], sound: 's', pronounce: 's as in stone' }, 'с': { ans: ['s'], sound: 's', pronounce: 's as in stone' },
+    'Т': { ans: ['t'], sound: 't', pronounce: 't as in top' }, 'т': { ans: ['t'], sound: 't', pronounce: 't as in top' },
+    'У': { ans: ['u'], sound: 'oo', pronounce: 'oo as in tool' }, 'у': { ans: ['u'], sound: 'oo', pronounce: 'oo as in tool' },
+    'Ф': { ans: ['f'], sound: 'f', pronounce: 'f as in face' }, 'ф': { ans: ['f'], sound: 'f', pronounce: 'f as in face' },
+    'Х': { ans: ['kh', 'h'], sound: 'kh', pronounce: 'ch as in loch' }, 'х': { ans: ['kh', 'h'], sound: 'kh', pronounce: 'ch as in loch' },
+    'Ц': { ans: ['ts', 'c'], sound: 'ts', pronounce: 'ts as in sits' }, 'ц': { ans: ['ts', 'c'], sound: 'ts', pronounce: 'ts as in sits' },
+    'Ч': { ans: ['ch'], sound: 'ch', pronounce: 'ch as in chat' }, 'ч': { ans: ['ch'], sound: 'ch', pronounce: 'ch as in chat' },
+    'Ш': { ans: ['sh'], sound: 'sh', pronounce: 'sh as in shrimp' }, 'ш': { ans: ['sh'], sound: 'sh', pronounce: 'sh as in shrimp' },
+    'Щ': { ans: ['shch', 'sch', 'šč', 'shh'], sound: 'shch', pronounce: 'sh-ch as in fresh cheese' }, 'щ': { ans: ['shch', 'sch', 'šč', 'shh'], sound: 'shch', pronounce: 'sh-ch as in fresh cheese' },
+    'Ы': { ans: ['y'], sound: 'y', pronounce: 'i as in ill (tongue back)' }, 'ы': { ans: ['y'], sound: 'y', pronounce: 'i as in ill (tongue back)' },
+    'Э': { ans: ['e'], sound: 'e', pronounce: 'e as in met' }, 'э': { ans: ['e'], sound: 'e', pronounce: 'e as in met' },
+    'Ю': { ans: ['yu', 'ju'], sound: 'yu', pronounce: 'yu as in use' }, 'ю': { ans: ['yu', 'ju'], sound: 'yu', pronounce: 'yu as in use' },
+    'Я': { ans: ['ya', 'ja'], sound: 'ya', pronounce: 'ya as in yard' }, 'я': { ans: ['ya', 'ja'], sound: 'ya', pronounce: 'ya as in yard' },
+    'Ь': { ans: ['', "'", "’", "soft", "soft sign"], sound: 'soft sign', pronounce: 'softens previous consonant' }, 'ь': { ans: ['', "'", "’", "soft", "soft sign"], sound: 'soft sign', pronounce: 'softens previous consonant' },
+    'Ъ': { ans: ['', "'", "’", "hard", "hard sign"], sound: 'hard sign', pronounce: 'creates pause, hardens consonant' }, 'ъ': { ans: ['', "'", "’", "hard", "hard sign"], sound: 'hard sign', pronounce: 'creates pause, hardens consonant' },
+};
+
+// Categorization for filtering
+const VOWELS = new Set(['А','Е','Ё','И','О','У','Ы','Э','Ю','Я','а','е','ё','и','о','у','ы','э','ю','я']);
+const SIGNS = new Set(['Ь','Ъ','ь','ъ']);
+const YOSET = new Set(['Ё','Й','Ю','Я','ё','й','ю','я']);
+
+// Progress store
+let stats = JSON.parse(localStorage.getItem('cyr_djt_stats_enhanced')||'{}');
+for(const k of Object.keys(ROMA)){
+  if(!stats[k]) stats[k] = {seen:0, ok:0, bad:0};
+}
+
+// UI elements
+const glyph = document.getElementById('glyph');
+const ans   = document.getElementById('answer');
+const msg   = document.getElementById('message');
+const accEl = document.getElementById('acc');
+const seenEl= document.getElementById('seen');
+const strEl = document.getElementById('streak');
+const masEl = document.getElementById('mastered');
+const tbl   = document.getElementById('tableBody');
+const learningPage = document.getElementById('learningPage');
+const progressMap = document.getElementById('progressMap');
+
+// Toggles
+const upper = document.getElementById('upper');
+const lower = document.getElementById('lower');
+const vowels = document.getElementById('vowels');
+const consonants = document.getElementById('consonants');
+const yoSet = document.getElementById('yoSet');
+const signs = document.getElementById('signs');
+const weightMistakes = document.getElementById('weightMistakes');
+
+let current = 'А';
+let streak = 0;
+let totalSeen = 0, totalOk = 0;
+
+function pool(){
+  let keys = Object.keys(ROMA).filter(ch=>{
+    if(!upper.checked && ch === ch.toUpperCase()) return false;
+    if(!lower.checked && ch === ch.toLowerCase()) return false;
+    if(!vowels.checked && VOWELS.has(ch)) return false;
+    const isConsonant = !VOWELS.has(ch) && !SIGNS.has(ch);
+    if(!consonants.checked && isConsonant) return false;
+    if(!yoSet.checked && YOSET.has(ch)) return false;
+    if(!signs.checked && SIGNS.has(ch)) return false;
+    return true;
+  });
+  if(keys.length===0) keys = Object.keys(ROMA);
+  if(weightMistakes.checked){
+    const weights = keys.map(k=>{
+      const s=stats[k];
+      const score = (s.bad+1)/(s.seen+1);
+      return Math.max(0.02, score);
+    });
+    return {keys,weights};
+  }
+  return {keys,weights:null};
+}
+
+function pick(){
+  const {keys,weights} = pool();
+  if(!weights){
+    current = keys[Math.floor(Math.random()*keys.length)];
+  } else {
+    const sum = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*sum;
+    for(let i=0;i<keys.length;i++){
+      r -= weights[i];
+      if(r<=0){ current = keys[i]; break; }
+    }
+  }
+  glyph.textContent = current;
+  ans.value = '';
+  ans.focus();
+  msg.textContent = '';
+}
+
+function normalize(s){
+  return s.trim().toLowerCase();
+}
+
+function check(){
+  const got = normalize(ans.value);
+  const okList = ROMA[current].ans.map(normalize);
+  const isOK = okList.includes(got);
+  const s = stats[current];
+  s.seen++; totalSeen++;
+  if(isOK){ s.ok++; totalOk++; streak++; success(`✔ Correct: ${current} → ${okList[0]}`); speak(ROMA[current].sound); }
+  else { s.bad++; streak=0; fail(`✖ ${got||'(blank)'} — expected: ${okList.join(', ')}`); }
+  stats[current]=s; save();
+  updateStats();
+  updateTableRow(current);
+  if(isOK){ setTimeout(pick, 450); }
+}
+
+function reveal(){
+  const okList = ROMA[current].ans;
+  msg.innerHTML = `<span class="hint">Answer: <b>${okList.join(', ')}</b></span>`;
+  ans.focus();
+}
+
+function success(t){ msg.innerHTML = `<span class="good">${t}</span>`; }
+function fail(t){ msg.innerHTML = `<span class="bad">${t}</span>`; }
+
+function save(){ localStorage.setItem('cyr_djt_stats_enhanced', JSON.stringify(stats)); }
+function resetStats(){ localStorage.removeItem('cyr_djt_stats_enhanced'); for(const k of Object.keys(ROMA)) stats[k]={seen:0,ok:0,bad:0}; streak=0; totalSeen=0; totalOk=0; updateStats(); buildTable(); pick(); }
+function reseed(){ pick(); }
+
+function accuracy(){ return totalSeen? Math.round(100*totalOk/totalSeen):100; }
+function masteredCount(){
+  let n=0; for(const k of Object.keys(stats)){ const s=stats[k]; if(s.seen>=5 && (s.bad/(s.seen||1))<=0.1) n++; } return n;
+}
+
+function updateStats(){
+  totalSeen = Object.values(stats).reduce((a,s)=>a+s.seen,0);
+  totalOk   = Object.values(stats).reduce((a,s)=>a+s.ok,0);
+  accEl.textContent = accuracy()+"%";
+  seenEl.textContent = totalSeen;
+  strEl.textContent = streak;
+  masEl.textContent = masteredCount();
+}
+
+function buildTable(){
+  tbl.innerHTML='';
+  for(const k of Object.keys(ROMA)){
+    const tr = document.createElement('tr');
+    tr.id = 'row_'+k.codePointAt(0);
+    tr.innerHTML = `<td style="font-weight:700">${k}</td><td>${ROMA[k].ans.join(', ')}</td><td>0</td><td>0</td><td>0</td>`;
+    tbl.appendChild(tr);
+  }
+  for(const k of Object.keys(stats)) updateTableRow(k);
+}
+
+function updateTableRow(k){
+  const tr = document.getElementById('row_'+k.codePointAt(0));
+  if(!tr) return;
+  const s = stats[k];
+  tr.children[2].textContent = s.seen;
+  tr.children[3].textContent = s.ok;
+  tr.children[4].textContent = s.bad;
+}
+
+function speak(text){
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ru-RU';
+    u.rate = 0.9;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){ console.error("Speech synthesis failed", e); }
+}
+
+function buildLearningPage() {
+    learningPage.innerHTML = '';
+    const uniqueLetters = [...new Set(Object.keys(ROMA).map(l => l.toUpperCase()))];
+    uniqueLetters.sort((a,b) => a.localeCompare(b, 'ru'));
+    
+    uniqueLetters.forEach(letter => {
+        const lower = letter.toLowerCase();
+        const data = ROMA[letter] || ROMA[lower];
+        if(!data) return;
+
+        const card = document.createElement('div');
+        card.className = 'learn-card';
+        card.innerHTML = `
+            <div class="learn-char">${letter} ${lower}</div>
+            <div class="learn-roman"><b>Romanization:</b> ${data.ans.join(', ')}</div>
+            <div class="learn-pronounce"><b>Pronunciation:</b> ${data.pronounce}</div>
+        `;
+        card.onclick = () => speak(data.sound);
+        learningPage.appendChild(card);
+    });
+}
+
+function toggleLearningPage() {
+    const isHidden = learningPage.style.display === 'none' || learningPage.style.display === '';
+    learningPage.style.display = isHidden ? 'grid' : 'none';
+    progressMap.style.display = isHidden ? 'none' : 'block';
+}
+
+document.getElementById('submitBtn').addEventListener('click', check);
+document.getElementById('nextBtn').addEventListener('click', pick);
+document.getElementById('speakBtn').addEventListener('click', ()=>speak(ROMA[current].sound));
+document.getElementById('toggleLearnBtn').addEventListener('click', toggleLearningPage);
+[upper,lower,vowels,consonants,yoSet,signs,weightMistakes].forEach(el=>el.addEventListener('change', pick));
+ans.addEventListener('keydown', (e)=>{
+   if(e.key==='Enter'){ e.preventDefault(); check(); }
+   if(e.key===' '){ e.preventDefault(); pick(); }
+ });
+
+// Init
+buildTable();
+buildLearningPage();
+updateStats();
+pick();
+</script>
+</body>
+</html>
